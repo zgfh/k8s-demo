@@ -1,0 +1,76 @@
+apiVersion: v1
+data:
+  index.html: |
+    this is index
+  test: |
+    this is this
+  test2: |
+    this is this2
+  test3: |
+    this is this3
+kind: ConfigMap
+metadata:
+  name: ingress-demo-nginx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-demo
+  labels:
+    app: nginx
+spec:
+  replicas: 1  # 副本数量
+  strategy:
+    type: RollingUpdate # 可选: Recreate,RollingUpdate
+    rollingUpdate:
+      maxSurge: 2        # 一次增加的数量
+      maxUnavailable: 25%  # 更新期间，不可用的最大数量，是一个可选字段，指定更新过程中可用的最大Pod数。该值可以是绝对数（例如，5）或所需Pod的百分比（例如，10％）。通过四舍五入计算绝对数字的百分比。如果.spec.strategy.rollingUpdate.maxSurge为0，则该值不能为0.默认值为25％。
+  selector:    # 选择器，如何查找要管理的 pod,请确保没有别的controller使用相同的label
+    matchLabels:
+      app: ingress-demo-nginx
+  template: # 同 pod,但 RestartPolicy 必须为Always(默认)
+    metadata:
+      labels:
+        app: ingress-demo-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.15.7
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-data
+          mountPath: /usr/share/nginx/html
+      volumes: # see https://kubernetes.io/docs/concepts/storage/volumes/
+        - name: nginx-data
+          configMap:
+            name: ingress-demo-nginx
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ingress-demo-nginx
+spec:
+#  clusterIP: #默认自动分配，如果不想要负载均衡，可以设置为“None”,
+#  type: ClusterIP  # NodePort,LoadBalancer,ExternalName,默认ClusterIP,
+#  externalName: my.database.example.com
+  selector:
+    app: ingress-demo-nginx
+  ports:
+    - name: http # 默认TCP，支持：TCP, UDP, SCTP
+      port: 80
+      targetPort: 80  # pod 的端口
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress-path-1 # 代理 ingress-demo-nginx:80/test 到 ingress-demo-nginx:80/test
+spec: # 默认ingress的语法就这些，更复杂的配置要跟查询各ingress的文档
+  rules:
+  - host: test2.dev.k8s.daozzg.com
+    http:
+      paths:
+      - backend:
+          serviceName: ingress-demo-nginx
+          servicePort: 80
+        path: /test # 不写默认是 /

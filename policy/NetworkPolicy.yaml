@@ -1,0 +1,74 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy # 网络策略，针对一组pod设定哪些能进入（ingress），哪些能出去（egress）
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector: #选择一组pod
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: # 代表符合下面条件的资源的流量能进入上面选择的pod
+  - from:
+    - ipBlock:
+        cidr: 172.17.0.0/16
+        except:
+        - 172.17.1.0/24
+    - namespaceSelector:
+        matchLabels:
+          project: myproject
+    - podSelector:
+        matchLabels:
+          role: frontend
+    ports: 
+    - protocol: TCP
+      port: 6379
+  egress: # 代表上面选择的pod能访问符合下面条件的资源
+  - to:
+    - ipBlock:
+        cidr: 10.0.0.0/24
+    ports:
+    - protocol: TCP
+      port: 5978
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny # 阻止所有进来的流量 （ingress没有写，默认null）
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all # 允许所有进来的流量 （ingress写{},代表所有）
+spec:
+  podSelector: {}
+  ingress:
+  - {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny # 阻止pod出的所有流量（Egress没有写，默认null）
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all # 阻止pod出的所有流量（Egress写{},代表所有）
+spec:
+  podSelector: {}
+  egress:
+  - {}
+  policyTypes:
+  - Egress

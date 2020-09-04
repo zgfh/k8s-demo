@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ResourceQuota #针对空间总量 docs: https://kubernetes.io/docs/concepts/policy/resource-quotas/
+metadata:
+  name: object-quota-demo
+  namespace: default
+spec:
+  hard:
+    # 计算
+    limits.cpu: "1"
+    limits.memory: 1Gi
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    requests.nvidia.com/gpu: "1"
+    # 存储
+    requests.storage: 500Gi
+    persistentvolumeclaims: "1"
+    # <storage-class-name>.storageclass.storage.k8s.io/requests.storage: 500Gi
+    # <storage-class-name>.storageclass.storage.k8s.io/persistentvolumeclaims: "1"
+    requests.ephemeral-storage:
+    limits.ephemeral-storage: 
+    # 数量限制
+    # count/<resource>.<group> # 支持的资源:persistentvolumeclaims,services,secrets,configmaps,replicationcontrollers,deployments.apps,replicasets.apps,statefulsets.apps,jobs.batch,cronjobs.batch,deployments.extensions,
+    # count/widgets.example.com
+    services.loadbalancers: "2"
+    services.nodeports: "0"  
+    pods: "1"
+    resourcequotas: "5"
+    scopeSelector: # 不写就是匹配所有
+      matchExpressions:
+      - operator : In  # NotIn,InExist,DoesNotExist
+        scopeName: PriorityClass
+        values: ["high"] # PriorityClass名,如果指定，会匹配pod的spec.priorityClassName
+        

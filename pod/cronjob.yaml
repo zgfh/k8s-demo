@@ -1,0 +1,22 @@
+# kubectl run hello --schedule="*/1 * * * *" --restart=OnFailure --image=busybox -- /bin/sh -c "date; echo Hello from the Kubernetes cluster"
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "*/1 * * * *"  # 参考: https://en.wikipedia.org/wiki/Cron
+  failedJobsHistoryLimit: 1 # 保留运行失败历史记录的数量，默认1
+  successfulJobsHistoryLimit: 3 # 保留运行完成历史记录的数量，默认3
+  # concurrencyPolicy: "Allow"  # Allow:允许同时执行; Forbid:忽略本地运行如果之前的还没有运行完;Replace:删除正在运行的新建一个
+  jobTemplate:  # 同job (内部结构见：https://github.com/zgfh/k8s-demo/blob/master/pod/job.yaml)
+    spec:
+      template: #同 pod (内部结构见：https://github.com/zgfh/k8s-demo/blob/master/pod/pod.yaml)
+        spec: 
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure

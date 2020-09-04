@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-demo
+spec:
+  # 非并行作业/并行作业/具有工作队列的并行作业，参考：https://v1-12.docs.kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#job-patterns
+  parallelism: 1 # 最大并行数量
+  completions: 1 # 需要完成的次数
+  backoffLimit: 4 # 重试次数
+  template: # 同 pod (内部结构见：https://github.com/zgfh/k8s-demo/blob/master/pod/pod.yaml),
+    spec:
+      containers:
+      - name: job-demo
+        image: busybox
+        command: ["sh",  "-c", "echo 'hello world'"]
+      restartPolicy: Never
+  

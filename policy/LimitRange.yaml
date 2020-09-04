@@ -1,0 +1,36 @@
+#docs: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/resource-management/admission_control_limit_range.md
+apiVersion: v1
+kind: LimitRange #针对default空间下每个container/Pod
+metadata:
+  name: limit-mem-cpu
+  namespace: default
+spec:
+  limits:
+  - max: # 最大
+      cpu: "800m"
+      memory: "1Gi"
+    min: # 最小
+      cpu: "100m"
+      memory: "99Mi"
+    default: #默认limit
+      cpu: "700m"
+      memory: "900Mi"
+    defaultRequest: #默认request
+      cpu: "110m"
+      memory: "111Mi"
+    maxLimitRequestRatio: # Limit/request的比值
+      memory: 2 # Limit/request<=2
+    type: Container # Container或Pod, 支持cpu,memory资源, 其中Pod只支持max,min,maxLimitRequestRatio设置，Container支持以上所有
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: limit-storage
+  namespace: default
+spec:
+  limits:
+  - max: # 最大
+      storage: "5Gi"
+    min: # 最小
+      cpu: "1Gi"
+    type: PersistentVolumeClaim  # 只支持 storage资源, 只支持max,min

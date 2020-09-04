@@ -1,0 +1,28 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+#  clusterIP: #默认自动分配，如果不想要负载均衡，可以设置为“None”,
+#  type: ClusterIP  # NodePort,LoadBalancer,ExternalName,默认ClusterIP,
+#  externalName: my.database.example.com
+  selector:
+    app: MyApp
+  ports:
+    - name: http # 多个port，名称必须指定为不同值
+      protocol: TCP # 默认TCP，支持：TCP, UDP, SCTP
+      port: 80   # service 端口，默认为targetPort
+      targetPort: 9376  # pod 的端口
+#      nodePort: 30376  # NodePort端口，默认自动分配，可以指定
+      
+---
+# 如果没有selector，可以手动创建Endpoints
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: my-service
+subsets:
+  - addresses:
+      - ip: 1.2.3.4
+    ports:
+      - port: 9376

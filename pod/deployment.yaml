@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-demo  
+  labels:  
+    app: nginx 
+spec:
+  replicas: 3  # 副本数量
+  strategy:
+    type: RollingUpdate # 可选: Recreate,RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%        # 一次增加的数量,默认25%
+      maxUnavailable: 25%  # 更新期间，不可用的最大数量，是一个可选字段，指定更新过程中可用的最大Pod数。该值可以是绝对数（例如，5）或所需Pod的百分比（例如，10％）。通过四舍五入计算绝对数字的百分比。如果.spec.strategy.rollingUpdate.maxSurge为0，则该值不能为0.默认值为25%。
+  selector:    # 选择器，如何查找要管理的 pod,请确保没有别的controller使用相同的label
+    matchLabels:
+      app: deployment-demo-nginx
+  template: # 同 pod (内部结构见：https://github.com/zgfh/k8s-demo/blob/master/pod/pod.yaml),但 RestartPolicy 必须为Always(默认)
+    metadata:
+      labels: 
+        app: deployment-demo-nginx
+    spec:
+      containers:
+      - name: nginx 
+        image: nginx:1.15.4
+        ports:  
+        - containerPort: 80 

@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Pod # https://v1-12.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.12/#pod-v1-core
+metadata:
+  labels:
+    test: liveness
+  name: liveness-http
+spec:
+  restartPolicy: Always # 默认Always,可选: 默认Always, OnFailure
+# 存储
+#  volumes:
+# 网络
+#  hostname: nginx
+#  hostNetwork: true
+#  dnsPolicy: ClusterFirst # 可选: ClusterFirst,ClusterFirstWithHostNet,'Default','None'
+#  dnsConfig: 配置请参考: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+#  hostAliases:
+#  - ip: "127.0.0.1"
+#    hostnames:
+#    - "foo.local"
+#    - "bar.local"
+# 调度
+#  nodeSelector:  # 通过label 选择node，注意，先通过 `kubectl label nodes <node-name> <label-key>=<label-value>` 增加label
+#    disktype: ssd
+#  nodeName: xxx  # 直接调度到某个node上面，不建议使用 
+#  tolerations:   # 如果节点有污点，可以通过配置tolerations使pod能够调度到具有某污点到节点
+#  affinity:  # 亲和性,更灵活的控制pod调度,支持pod和node亲和性 : https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+# 权限
+#  serviceAccountName: xxx # 不指定，默认为: default
+  containers:
+  - name: liveness # 容器名称
+    #TODO 启动容器执行的命令，command 和args 有什么区别？
+    command: ['sh', '-c', 'echo Hello Kubernetes! && sleep 3600']
+#    workingDir: /app
+#    volumeMounts:
+    env:
+    - name: DEMO_GREETING
+      value: "Hello from the environment"
+#      valueFrom:
+#        fieldRef:  # 可选: metadata.name, metadata.namespace, metadata.labels, metadata.annotations, spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP.
+#        resourceFieldRef: # 可选:  only resources limits and requests (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage)
+#        secretKeyRef: # TODO
+#        configMapKeyRef:
+#          name: special-config
+#          key: special.type
+#    envFrom:
+#      - configMapRef:
+#          name: env-config
+    image: nginx
+    imagePullPolicy: Always # 可选: Always, Never, IfNotPresent
+#    imagePullSecrets:  #TODO
+    resources: # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+      limits: # limits用于限制运行时容器占用的资源，用来限制容器的最大CPU、内存的使用率。当容器申请内存超过limits时会被终止，并根据重启策略进行重启。
+        cpu: "1"
+        memory: 256Mi
+      requests: # requests来设置各容器需要的最小资源
+        cpu: "0.6"
+        memory: 256Mi
+#    lifecycle: 
+#      postStart: #开始前执行， 内容同livenessProbe
+#      preStop: #停止前执行， 内容同livenessProbe
+#    readinessProbe: # 就绪检查: 指示容器是否准备好服务请求。如果就绪探测失败，端点控制器将从与 Pod 匹配的所有 Service 的端点中删除该 Pod 的 IP 地址。
+#    startupProbe: # 启动检查(1.16+版本) 指示容器中的应用程序是否已启动，如果提供了启动检查，则将禁用所有其他检查，直到成功，没有提供默认成功-更好的解决启动慢的问题
+    livenessProbe: # 存活检查: 如果容器内的服务挂掉，但容器并没有退出，则需要配置livenessProbe来检测服务状态，否则无需配置
+#      exec: # 在容器内执行指定命令。如果命令退出时返回码为 0 则认为诊断成功。
+#        command: ['sh', '-c', 'curl -v 127.0.0.1:80 |grep “200”']
+#      tcpSocket: # 对指定端口上的容器的 IP 地址进行 TCP 检查。如果端口打开，则诊断被认为是成功的。
+        # host: my-host #连接的Host name,默认pod id,
+#        port: 80
+      httpGet: # 对指定的端口和路径上的容器的 IP 地址执行 HTTP Get 请求。如果响应的状态码大于等于200 且小于 400，则诊断被认为是成功的。
+        # when "host" is not defined, "PodIP" will be used
+        # host: my-host
+        # when "scheme" is not defined, "HTTP" scheme will be used. Only "HTTP" and "HTTPS" are allowed
+        # scheme: HTTPS
+        path: /
+        port: 80
+        httpHeaders:
+        - name: X-Custom-Header
+          value: Awesome
+      initialDelaySeconds: 15 #等待多少秒后开始第一次检查，解决启动慢的问题，但更好的方式使用startupProbe
+      failureThreshold: 3 # 在成功后的多少次连续检查失败被认为是失败，默认3s，最小值是1s
+      periodSeconds: 10 # 多少次检查一次，默认10s，最小值是1s
+      timeoutSeconds: 1 # 多久会被认为超时,默认1s
+#  initContainers: # Init 容器完成一些初始化操作
+#  - name: init-myservice
+#    image: busybox
+#    command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']

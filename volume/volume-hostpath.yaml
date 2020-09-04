@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pd
+spec:
+  containers:
+  - image: k8s.gcr.io/test-webserver
+    name: test-container
+    volumeMounts:
+    - mountPath: /test-pd # 容器目录
+      name: test-volume # 下面voluems中对应的volume名称
+  volumes:
+  - name: test-volume
+    hostPath:  # 详细: https://kubernetes.io/docs/concepts/storage/volumes/#hostpath
+      path: /data # 主机目录,注意默认创建的权限是(root,755),因此需要注意容器内用户是否有权限写或提前创建目录(可以用initContainer)
+      type: Directory  # 类型，目录: Directory,目录或创建新目录(0755): DirectoryOrCreate ,空(不做检测) "",File,FileOrCreate,Socket,CharDevice,BlockDevice
