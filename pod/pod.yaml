@@ -5,7 +5,7 @@ metadata:
     test: liveness
   name: liveness-http
 spec:
-  restartPolicy: Always # 默认Always,可选: 默认Always, OnFailure
+  restartPolicy: Always # 默认Always,可选: 默认Always, OnFailure, Never
 # 存储
 #  volumes:
 # 网络
